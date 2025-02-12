@@ -1,5 +1,3 @@
-
-
 import streamlit as st
 import osmnx as ox
 import networkx as nx
@@ -12,6 +10,40 @@ from datetime import datetime
 GEMINI_API_KEY = "AIzaSyCc-f4VEvlTR8zuQKqa-tNiXbva9AF3RAU"
 genai.configure(api_key=GEMINI_API_KEY)
 model = genai.GenerativeModel('gemini-pro')
+
+# List of predefined Bengaluru locations
+BENGALURU_LOCATIONS = [
+    "Koramangala, Bengaluru",
+    "Indiranagar, Bengaluru",
+    "Whitefield, Bengaluru",
+    "Jayanagar, Bengaluru",
+    "Malleshwaram, Bengaluru",
+    "Rajajinagar, Bengaluru",
+    "Basavanagudi, Bengaluru",
+    "Electronic City, Bengaluru",
+    "HSR Layout, Bengaluru",
+    "BTM Layout, Bengaluru",
+    "Marathahalli, Bengaluru",
+    "Yelahanka, Bengaluru",
+    "Hebbal, Bengaluru",
+    "KR Puram, Bengaluru",
+    "Banashankari, Bengaluru",
+    "Ulsoor, Bengaluru",
+    "Sadashivanagar, Bengaluru",
+    "MG Road, Bengaluru",
+    "Vijayanagar, Bengaluru",
+    "JP Nagar, Bengaluru",
+    "Sarjapur, Bengaluru",
+    "Bellandur, Bengaluru",
+    "Kengeri, Bengaluru",
+    "Nagarbhavi, Bengaluru",
+    "Hennur, Bengaluru",
+    "RT Nagar, Bengaluru",
+    "Frazer Town, Bengaluru",
+    "Bommanahalli, Bengaluru",
+    "Domlur, Bengaluru",
+    "Shivaji Nagar, Bengaluru"
+]
 
 # Cache the graph loading
 @st.cache_data(ttl=3600)
@@ -148,12 +180,20 @@ def main():
             st.error(f"Error loading map data: {str(e)}")
             return
 
-    # User inputs
+    # User inputs with dropdowns
     col1, col2 = st.columns(2)
     with col1:
-        start = st.text_input("Start location", "Indiranagar, Bengaluru")
+        start = st.selectbox(
+            "Start location",
+            options=BENGALURU_LOCATIONS,
+            index=1  # Default to Indiranagar
+        )
     with col2:
-        end = st.text_input("End location", "Koramangala, Bengaluru")
+        end = st.selectbox(
+            "End location",
+            options=BENGALURU_LOCATIONS,
+            index=0  # Default to Koramangala
+        )
 
     if st.button("Find Optimal Route", type="primary"):
         with st.spinner("Calculating your route..."):
