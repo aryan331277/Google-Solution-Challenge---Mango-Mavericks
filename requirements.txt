@@ -1,9 +1,9 @@
-streamlit>=1.12.0
-osmnx>=1.5.2
-networkx>=2.8.8
-folium>=0.14.0
-streamlit-folium>=0.10.0
-google-generativeai>=1.0.0
+streamlit
+osmnx
+networkx
+folium
+streamlit-folium
+google-generativeai
 geopandas
 shapely
 rtree
