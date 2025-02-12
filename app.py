@@ -1,5 +1,4 @@
-import os
-os.system('pip install osmnx networkx folium streamlit-folium google-generativeai geopandas shapely rtree pyproj')
+
 
 import streamlit as st
 import osmnx as ox
