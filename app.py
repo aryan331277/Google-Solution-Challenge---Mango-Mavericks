@@ -5,11 +5,31 @@ import folium
 from streamlit_folium import folium_static
 import google.generativeai as genai
 from datetime import datetime
+POLICE_NUMBER = "+919380460725"  # Replace with your actual police number
 
 # Configure Gemini AI
 GEMINI_API_KEY = "AIzaSyCc-f4VEvlTR8zuQKqa-tNiXbva9AF3RAU"
 genai.configure(api_key=GEMINI_API_KEY)
 model = genai.GenerativeModel('gemini-pro')
+
+def send_police_alert(start, end, route_length):
+    current_time = datetime.now().strftime("%H:%M")
+    message = f"""
+    🚨 Emergency Vehicle Alert 🚨
+    From: {start}
+    To: {end}
+    Time: {current_time}
+    Route Length: {route_length} nodes
+    Please ensure clear traffic conditions.
+    """
+    try:
+        # Simulated send - replace with actual SMS API code
+        st.success(f"Alert sent to traffic police at {POLICE_NUMBER}")
+        st.markdown(f"**Message Content:**\n{message}")
+        return True
+    except Exception as e:
+        st.error(f"Alert failed: {str(e)}")
+        return False
 
 # Predefined Bengaluru locations
 BENGALURU_LOCATIONS = [
@@ -197,7 +217,24 @@ def main():
                         analysis = get_route_analysis(start, end)
                         st.info("🤖 Route Analysis: " + analysis)
                     
-                    st.success("✅ Route found successfully!")
+                   st.success("✅ Route found successfully!")
+
+                    # Add police alert section
+                    st.divider()
+                    st.subheader("🚨 Emergency Traffic Alert")
+                    
+                    if st.button("Notify Traffic Police"):
+                        with st.spinner("Sending emergency alert..."):
+                            route_length = len(route)
+                            alert_sent = send_police_alert(start, end, route_length)
+                            
+                            if alert_sent:
+                                st.markdown(f"""
+                                **Alert Details:**
+                                - Recipient: `{POLICE_NUMBER}`
+                                - Route: {start} → {end}
+                                - Sent at: {datetime.now().strftime("%H:%M:%S")}
+                                """)
                 else:
                     st.error("❌ No valid route found between these locations")
                     
