@@ -1,10 +1,7 @@
 streamlit
-osmnx
-networkx
-folium
-streamlit-folium
-google-generativeai
-geopandas
-shapely
-rtree
-pyproj
+datetime
+streamlit-folium>=0.1.5
+folium>=0.14.0
+osmnx>=1.6.0
+networkx>=3.1
+google-generativeai>=0.3.0
