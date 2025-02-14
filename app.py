@@ -135,52 +135,6 @@ def plot_route_on_map(G, route):
     
     return m
 
-def plot_route_on_map(G, route):
-    route_edges = list(zip(route[:-1], route[1:]))
-    
-    center_lat = G.nodes[route[0]]['y']
-    center_lon = G.nodes[route[0]]['x']
-    m = folium.Map(location=[center_lat, center_lon], 
-                  zoom_start=13,
-                  tiles='cartodbpositron')
-    
-    coordinates = []
-    for u, v in route_edges:
-        edge_coords = []
-        try:
-            data = G.get_edge_data(u, v)[0]
-            if 'geometry' in data:
-                coords = list(data['geometry'].coords)
-                edge_coords.extend(coords)
-            else:
-                start_coords = (G.nodes[u]['x'], G.nodes[u]['y'])
-                end_coords = (G.nodes[v]['x'], G.nodes[v]['y'])
-                edge_coords.extend([start_coords, end_coords])
-        except (KeyError, IndexError):
-            continue
-            
-        coordinates.extend(edge_coords)
-    
-    folium.PolyLine(
-        locations=[[lat, lon] for lon, lat in coordinates],
-        weight=5,
-        color='red',
-        opacity=0.8
-    ).add_to(m)
-    
-    folium.Marker(
-        [G.nodes[route[0]]['y'], G.nodes[route[0]]['x']],
-        popup='Start',
-        icon=folium.Icon(color='green')
-    ).add_to(m)
-    
-    folium.Marker(
-        [G.nodes[route[-1]]['y'], G.nodes[route[-1]]['x']],
-        popup='End',
-        icon=folium.Icon(color='red')
-    ).add_to(m)
-    
-    return m
 
 def optimize_route(G, start_node, end_node):
     current_hour = datetime.now().hour
