@@ -69,58 +69,63 @@ def get_traffic_weight(road_type, current_hour):
 def plot_route_on_map(G, route):
     route_edges = list(zip(route[:-1], route[1:]))
     
+    # Center the map on the first node
     center_lat = G.nodes[route[0]]['y']
     center_lon = G.nodes[route[0]]['x']
-    m = folium.Map(location=[center_lat, center_lon], 
-                   zoom_start=13,
-                   tiles='cartodbpositron')
+    m = folium.Map(location=[center_lat, center_lon], zoom_start=13, tiles='cartodbpositron')
     
-    coordinates = []
+    # Build the full polyline coordinates for the route
+    poly_coords = []
     for u, v in route_edges:
-        edge_coords = []
         try:
             data = G.get_edge_data(u, v)[0]
             if 'geometry' in data:
+                # Get the list of (x, y) points from the geometry
                 coords = list(data['geometry'].coords)
-                edge_coords.extend(coords)
             else:
-                start_coords = (G.nodes[u]['x'], G.nodes[u]['y'])
-                end_coords = (G.nodes[v]['x'], G.nodes[v]['y'])
-                edge_coords.extend([start_coords, end_coords])
+                coords = [
+                    (G.nodes[u]['x'], G.nodes[u]['y']),
+                    (G.nodes[v]['x'], G.nodes[v]['y'])
+                ]
+            poly_coords.extend(coords)
         except (KeyError, IndexError):
             continue
-        coordinates.extend(edge_coords)
+
+    # Folium expects coordinates as [lat, lon]; our coords are (x, y) so we swap them.
+    polyline_coords = [[y, x] for x, y in poly_coords]
+    folium.PolyLine(locations=polyline_coords, weight=5, color='red', opacity=0.8).add_to(m)
     
-    folium.PolyLine(
-        locations=[[lat, lon] for lon, lat in coordinates],
-        weight=5,
-        color='red',
-        opacity=0.8
-    ).add_to(m)
+    # Set a lower threshold for heavy traffic (adjust as needed)
+    heavy_traffic_threshold = 1.5
     
-    heavy_traffic_threshold = 2.0
+    # Loop over each edge and add a red circle if its weight exceeds the threshold
     for u, v in route_edges:
         try:
             data = G.get_edge_data(u, v)[0]
             weight = data.get('weight', 1.0)
             if weight >= heavy_traffic_threshold:
+                # If geometry exists, use its centroid for a better midpoint.
                 if 'geometry' in data:
-                    coords = list(data['geometry'].coords)
-                    mid_x, mid_y = coords[len(coords) // 2]
+                    geom = data['geometry']
+                    mid_point = [geom.centroid.y, geom.centroid.x]
                 else:
                     mid_x = (G.nodes[u]['x'] + G.nodes[v]['x']) / 2
                     mid_y = (G.nodes[u]['y'] + G.nodes[v]['y']) / 2
+                    mid_point = [mid_y, mid_x]
+                
                 folium.CircleMarker(
-                    location=[mid_y, mid_x],
-                    radius=8,
+                    location=mid_point,
+                    radius=10,  # increased radius for better visibility
                     color='red',
                     fill=True,
                     fill_color='red',
-                    fill_opacity=0.7
+                    fill_opacity=0.7,
+                    tooltip=f"Heavy Traffic: {weight:.2f}"
                 ).add_to(m)
         except Exception as e:
             continue
-
+    
+    # Add start and end markers.
     folium.Marker(
         [G.nodes[route[0]]['y'], G.nodes[route[0]]['x']],
         popup='Start',
