@@ -72,6 +72,75 @@ def plot_route_on_map(G, route):
     center_lat = G.nodes[route[0]]['y']
     center_lon = G.nodes[route[0]]['x']
     m = folium.Map(location=[center_lat, center_lon], 
+                   zoom_start=13,
+                   tiles='cartodbpositron')
+    
+    coordinates = []
+    for u, v in route_edges:
+        edge_coords = []
+        try:
+            data = G.get_edge_data(u, v)[0]
+            if 'geometry' in data:
+                coords = list(data['geometry'].coords)
+                edge_coords.extend(coords)
+            else:
+                start_coords = (G.nodes[u]['x'], G.nodes[u]['y'])
+                end_coords = (G.nodes[v]['x'], G.nodes[v]['y'])
+                edge_coords.extend([start_coords, end_coords])
+        except (KeyError, IndexError):
+            continue
+        coordinates.extend(edge_coords)
+    
+    folium.PolyLine(
+        locations=[[lat, lon] for lon, lat in coordinates],
+        weight=5,
+        color='red',
+        opacity=0.8
+    ).add_to(m)
+    
+    heavy_traffic_threshold = 2.0
+    for u, v in route_edges:
+        try:
+            data = G.get_edge_data(u, v)[0]
+            weight = data.get('weight', 1.0)
+            if weight >= heavy_traffic_threshold:
+                if 'geometry' in data:
+                    coords = list(data['geometry'].coords)
+                    mid_x, mid_y = coords[len(coords) // 2]
+                else:
+                    mid_x = (G.nodes[u]['x'] + G.nodes[v]['x']) / 2
+                    mid_y = (G.nodes[u]['y'] + G.nodes[v]['y']) / 2
+                folium.CircleMarker(
+                    location=[mid_y, mid_x],
+                    radius=8,
+                    color='red',
+                    fill=True,
+                    fill_color='red',
+                    fill_opacity=0.7
+                ).add_to(m)
+        except Exception as e:
+            continue
+
+    folium.Marker(
+        [G.nodes[route[0]]['y'], G.nodes[route[0]]['x']],
+        popup='Start',
+        icon=folium.Icon(color='green')
+    ).add_to(m)
+    
+    folium.Marker(
+        [G.nodes[route[-1]]['y'], G.nodes[route[-1]]['x']],
+        popup='End',
+        icon=folium.Icon(color='red')
+    ).add_to(m)
+    
+    return m
+
+def plot_route_on_map(G, route):
+    route_edges = list(zip(route[:-1], route[1:]))
+    
+    center_lat = G.nodes[route[0]]['y']
+    center_lon = G.nodes[route[0]]['x']
+    m = folium.Map(location=[center_lat, center_lon], 
                   zoom_start=13,
                   tiles='cartodbpositron')
     
