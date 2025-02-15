@@ -88,13 +88,24 @@ def update_edge_weights(G, traffic_tree, traffic_segments):
         data['traffic_weight'] = (length / 1000) / (current_speed / 3.6)
 
 def get_traffic_aware_graph(G):
-    bbox = ox.utils_geo.bbox_from_graph(G)
-    traffic_data = fetch_traffic_data(f"{bbox[1]},{bbox[0]},{bbox[3]},{bbox[2]}")
+    if G is None:
+        st.error("Graph G is not initialized correctly.")
+        return None
     
-    if traffic_data:
-        traffic_tree, traffic_segments = process_traffic_data(traffic_data)
-        update_edge_weights(G, traffic_tree, traffic_segments)
-    return G
+    try:
+        bbox = ox.utils_graph.graph_to_gdfs(G, nodes=False, edges=False).total_bounds
+        bbox_str = f"{bbox[1]},{bbox[0]},{bbox[3]},{bbox[2]}"
+        
+        traffic_data = fetch_traffic_data(bbox_str)
+        if traffic_data:
+            traffic_tree, traffic_segments = process_traffic_data(traffic_data)
+            update_edge_weights(G, traffic_tree, traffic_segments)
+        return G
+
+    except AttributeError as e:
+        st.error(f"AttributeError: {e}")
+        return None
+
 
 
 def get_traffic_weight(road_type, current_hour):
