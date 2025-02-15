@@ -139,6 +139,9 @@ def plot_route_on_map(G, route):
     center_lon = G.nodes[route[0]]['x']
     m = folium.Map(location=[center_lat, center_lon], zoom_start=13, tiles='cartodbpositron')
     
+    # Collect traffic data for heatmap
+    traffic_points = []
+    
     poly_coords = []
     for u, v in route_edges:
         if 'geometry' in G[u][v][0]:
@@ -151,18 +154,44 @@ def plot_route_on_map(G, route):
     
     for u, v in route_edges:
         data = G.get_edge_data(u, v)[0]
-        if data.get('weight', 1) >= 2.0:  # Adjusted threshold for heavy traffic
-            midpoint = data['geometry'].centroid if 'geometry' in data else [
-                (G.nodes[u]['y']+G.nodes[v]['y'])/2,
-                (G.nodes[u]['x']+G.nodes[v]['x'])/2
-            ]
-            folium.CircleMarker(
-                location=midpoint[::-1] if isinstance(midpoint, list) else [midpoint.y, midpoint.x],
-                radius=8, color='red', fill=True, tooltip=f"Traffic Delay: {data['weight']:.1f}s/m"
+        if data.get('weight', 1) >= 2.0:
+            if 'geometry' in data:
+                midpoint = data['geometry'].centroid
+                loc = [midpoint.y, midpoint.x]
+            else:
+                loc = [
+                    (G.nodes[u]['y'] + G.nodes[v]['y'])/2,
+                    (G.nodes[u]['x'] + G.nodes[v]['x'])/2
+                ]
+            
+            # Add point to heatmap data
+            traffic_points.append(loc)
+            
+            # Add circular marker with pulsating effect
+            folium.Circle(
+                location=loc,
+                radius=data['weight'] * 20,  # Dynamic radius based on traffic severity
+                color='red',
+                fill=True,
+                fill_opacity=0.3,
+                tooltip=f"Traffic Delay: {data['weight']:.1f}s/m"
             ).add_to(m)
     
-    folium.Marker([G.nodes[route[0]]['y'], G.nodes[route[0]]['x']], icon=folium.Icon(color='green')).add_to(m)
-    folium.Marker([G.nodes[route[-1]]['y'], G.nodes[route[-1]]['x']], icon=folium.Icon(color='red')).add_to(m)
+    # Add heatmap layer if there's traffic data
+    if traffic_points:
+        folium.plugins.HeatMap(
+            traffic_points,
+            radius=25,
+            blur=20,
+            max_zoom=15,
+            gradient={0.4: 'yellow', 0.6: 'orange', 1: 'red'}
+        ).add_to(m)
+    
+    folium.Marker([G.nodes[route[0]]['y'], G.nodes[route[0]]['x']], 
+                 icon=folium.Icon(color='green')).add_to(m)
+    folium.Marker([G.nodes[route[-1]]['y'], G.nodes[route[-1]]['x']], 
+                 icon=folium.Icon(color='red')).add_to(m)
+    
     return m
 
 def send_police_alert(start, end, route_length):
