@@ -93,7 +93,7 @@ def get_traffic_aware_graph(G):
         return None
     
     try:
-        bbox = ox.utils_graph.graph_to_gdfs(G, nodes=False, edges=False).total_bounds
+        bbox = ox.graph_to_gdfs(G, nodes=False, edges=False).total_bounds
         bbox_str = f"{bbox[1]},{bbox[0]},{bbox[3]},{bbox[2]}"
         
         traffic_data = fetch_traffic_data(bbox_str)
