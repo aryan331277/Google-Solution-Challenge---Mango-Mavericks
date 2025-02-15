@@ -53,11 +53,14 @@ def process_traffic_data(traffic_json):
     segments = []
     for segment in traffic_json.get('flowSegmentData', []):
         coords = segment['coordinates']['coordinate']
-        if len(coords) < 2: continue
+        if len(coords) < 2:
+            continue
             
         midpoint = (
-            sum(c['latitude'] for c in coords)/len(coords),
-            sum(c['longitude'] for c in coords)/len(coords)
+            sum(c['latitude'] for c in coords) / len(coords),
+            sum(c['longitude'] for c in coords) / len(coords)
+        )  # <-- Added closing parenthesis here
+        
         segments.append({
             'midpoint': midpoint,
             'speed': segment['currentSpeed'],
@@ -66,7 +69,6 @@ def process_traffic_data(traffic_json):
     
     points = np.array([(s['midpoint'][0], s['midpoint'][1]) for s in segments])
     return KDTree(points), segments
-
 def update_edge_weights(G, traffic_tree, traffic_segments):
     for u, v, data in G.edges(data=True):
         if 'geometry' in data:
