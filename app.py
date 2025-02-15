@@ -87,7 +87,6 @@ def update_edge_weights(G, traffic_tree, traffic_segments):
         current_speed = max(segment['speed'], 5)
         data['traffic_weight'] = (length / 1000) / (current_speed / 3.6)
 
-@st.cache_data(ttl=300)
 def get_traffic_aware_graph(G):
     bbox = ox.utils_geo.bbox_from_graph(G)
     traffic_data = fetch_traffic_data(f"{bbox[1]},{bbox[0]},{bbox[3]},{bbox[2]}")
@@ -96,6 +95,7 @@ def get_traffic_aware_graph(G):
         traffic_tree, traffic_segments = process_traffic_data(traffic_data)
         update_edge_weights(G, traffic_tree, traffic_segments)
     return G
+
 
 def get_traffic_weight(road_type, current_hour):
     base_weights = {
