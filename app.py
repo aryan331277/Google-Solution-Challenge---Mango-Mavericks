@@ -142,6 +142,12 @@ def plot_route_on_map(G, route):
     # Collect traffic data for heatmap
     traffic_points = []
     
+    # Create feature groups for better layer control
+    route_group = folium.FeatureGroup(name='Route')
+    heatmap_group = folium.FeatureGroup(name='Traffic Heatmap')
+    marker_group = folium.FeatureGroup(name='Traffic Markers')
+
+    # Draw route path
     poly_coords = []
     for u, v in route_edges:
         if 'geometry' in G[u][v][0]:
@@ -150,8 +156,14 @@ def plot_route_on_map(G, route):
             poly_coords.extend([(G.nodes[u]['x'], G.nodes[u]['y']), 
                               (G.nodes[v]['x'], G.nodes[v]['y'])])
     
-    folium.PolyLine([[y, x] for x, y in poly_coords], weight=5, color='red', opacity=0.8).add_to(m)
-    
+    route_group.add_child(folium.PolyLine(
+        [[y, x] for x, y in poly_coords], 
+        weight=5, 
+        color='red', 
+        opacity=0.8
+    ))
+
+    # Add traffic markers and heatmap data
     for u, v in route_edges:
         data = G.get_edge_data(u, v)[0]
         if data.get('weight', 1) >= 2.0:
@@ -164,33 +176,57 @@ def plot_route_on_map(G, route):
                     (G.nodes[u]['x'] + G.nodes[v]['x'])/2
                 ]
             
-            # Add point to heatmap data
-            traffic_points.append(loc)
-            
-            # Add circular marker with pulsating effect
-            folium.Circle(
+            # Add pulsating circle marker
+            marker_group.add_child(folium.Circle(
                 location=loc,
-                radius=data['weight'] * 20,  # Dynamic radius based on traffic severity
-                color='red',
+                radius=max(data['weight'] * 50, 30),  # Minimum radius 30m
+                color='#ff0000',
                 fill=True,
-                fill_opacity=0.3,
-                tooltip=f"Traffic Delay: {data['weight']:.1f}s/m"
-            ).add_to(m)
-    
-    # Add heatmap layer if there's traffic data
+                fill_color='#ff4444',
+                fill_opacity=0.7,
+                weight=2,
+                opacity=0.9,
+                tooltip=f"Severe Traffic: {data['weight']:.1f}s/m"
+            ))
+            
+            # Add heatmap point with intensity based on weight
+            traffic_points.append(loc + [min(data['weight'] * 0.5, 5)])  # Intensity scaling
+
+    # Add heatmap layer
     if traffic_points:
-        folium.plugins.HeatMap(
+        heatmap_group.add_child(folium.plugins.HeatMap(
             traffic_points,
-            radius=25,
-            blur=20,
-            max_zoom=15,
-            gradient={0.4: 'yellow', 0.6: 'orange', 1: 'red'}
-        ).add_to(m)
-    
-    folium.Marker([G.nodes[route[0]]['y'], G.nodes[route[0]]['x']], 
-                 icon=folium.Icon(color='green')).add_to(m)
-    folium.Marker([G.nodes[route[-1]]['y'], G.nodes[route[-1]]['x']], 
-                 icon=folium.Icon(color='red')).add_to(m)
+            radius=35,
+            blur=25,
+            min_opacity=0.3,
+            max_zoom=16,
+            gradient={
+                0.2: 'yellow',
+                0.4: 'orange',
+                0.6: 'red',
+                0.8: '#8b0000'
+            }
+        ))
+
+    # Add markers for start/end points
+    marker_group.add_child(folium.Marker(
+        [G.nodes[route[0]]['y'], G.nodes[route[0]]['x']], 
+        icon=folium.Icon(color='green', icon='play', prefix='fa')
+    ))
+    marker_group.add_child(folium.Marker(
+        [G.nodes[route[-1]]['y'], G.nodes[route[-1]]['x']], 
+        icon=folium.Icon(color='red', icon='stop', prefix='fa')
+    ))
+
+    # Add all components to map
+    route_group.add_to(m)
+    heatmap_group.add_to(m)
+    marker_group.add_to(m)
+    folium.LayerControl().add_to(m)
+
+    # Fit map to show all relevant features
+    m.fit_bounds([[min(p[0] for p in poly_coords), min(p[1] for p in poly_coords)],
+                 [max(p[0] for p in poly_coords), max(p[1] for p in poly_coords)]])
     
     return m
 
