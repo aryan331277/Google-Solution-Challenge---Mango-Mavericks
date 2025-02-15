@@ -94,7 +94,9 @@ def get_traffic_aware_graph(G):
         return None
     
     try:
-        bbox = ox.graph_to_gdfs(G, nodes=False, edges=False).total_bounds
+        # Corrected line: Get edges GeoDataFrame to calculate bounding box
+        edges_gdf = ox.graph_to_gdfs(G, nodes=False, edges=True)
+        bbox = edges_gdf.total_bounds
         bbox_str = f"{bbox[1]},{bbox[0]},{bbox[3]},{bbox[2]}"
         
         traffic_data = fetch_traffic_data(bbox_str)
