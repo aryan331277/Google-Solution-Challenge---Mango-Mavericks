@@ -11,8 +11,8 @@ from scipy.spatial import KDTree
 import numpy as np
 
 # Configure APIs
-TOMTOM_API_KEY = "GFtqAElXhWwsq6W7oqbF3ffnYdVNk9fp" 
-GEMINI_API_KEY = "AIzaSyAStDKU9m_Frfj7A1teSqR7TTNK97aVA8c" 
+TOMTOM_API_KEY = "api" 
+GEMINI_API_KEY = "api" 
 POLICE_NUMBER = "+1234567890"
 
 genai.configure(api_key=GEMINI_API_KEY)
